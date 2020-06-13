@@ -405,3 +405,4 @@ with pd.option_context("display.max_rows", None):
 
 top_10 = prediction.nlargest(10, 'pred')
 top_10.style.apply(lambda col: item_relevancy(col))
+
