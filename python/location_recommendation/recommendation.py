@@ -1,23 +1,22 @@
-import os, warnings
+import os
+import warnings
+from random import randint
+
 import numpy as np
 import pandas as pd
 from geopy.distance import great_circle
 from shapely.geometry import MultiPoint
 from sklearn.cluster import DBSCAN
-from sklearn.model_selection import train_test_split
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics import pairwise_distances, mean_squared_error
-from sklearn.preprocessing import minmax_scale, MultiLabelBinarizer
 from sklearn.decomposition import NMF
-from random import randint, random, sample
-from ml_metrics import mapk, apk
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import minmax_scale
 
 pd.set_option('display.max_columns', 20)
 np.set_printoptions(suppress=True)
 
 main_path = '../..'
-
-plot_template = 'plotly_white'
 
 warnings.filterwarnings('ignore')
 
