@@ -11,7 +11,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import pairwise_distances, mean_squared_error
 from sklearn.preprocessing import minmax_scale, MultiLabelBinarizer
 from sklearn.decomposition import NMF
-from random import randint
+from random import randint, random, sample
 from ml_metrics import mapk, apk
 
 pd.set_option('display.max_columns', 20)
@@ -41,14 +41,14 @@ raw = pd.read_csv(data_file_path,
                   sep=',',
                   encoding='utf-8',
                   dtype=data_type,
-                  decimal=',')[1:1000]
+                  decimal=',')
 data_dim = raw.shape
 
 print(f'Dataframe dimentions: {data_dim}', f'\n{"-" * 50}\nData Types:\n{raw.dtypes}')
-
 raw.head()
 
 data = raw[['photo_id', 'owner', 'lat', 'lon', 'taken']]
+
 missing_nan = data.isna().sum()
 
 print('TOTAL MISSINGS:', missing_nan, sep='\n')
@@ -56,22 +56,6 @@ print('TOTAL MISSINGS:', missing_nan, sep='\n')
 data = data.dropna(subset=['lat', 'lon'])
 new_size = len(data.index)
 print(f'{"-" * 50}\n{data_dim[0] - new_size} empty rows are removed.')
-
-
-def paramsClusters(data, eps_range, minPts_range):
-    m_per_rad = 6371.0088 * 1000
-    df = pd.DataFrame(columns=['eps', 'min_pts', 'num_clusters'])
-    for m in minPts_range:
-        for e in eps_range:
-            eps_rad = e / m_per_rad
-            eps_rad = eps_rad
-            #  DBSCAN based on Haversine metric
-            db = DBSCAN(eps=eps_rad, min_samples=m, algorithm='ball_tree', metric='haversine').fit(
-                np.radians(data[['lat', 'lon']]))
-            c = len(set(db.labels_ + 1))
-            df = df.append({'eps': e, 'min_pts': m, 'num_clusters': c}, ignore_index=True)
-
-    return df
 
 
 def HDBSCAN(df, epsilon, minPts, x='lat', y='lon'):
@@ -116,16 +100,7 @@ def HDBSCAN(df, epsilon, minPts, x='lat', y='lon'):
 cdata = HDBSCAN(data, epsilon=120, minPts=10)
 print(f'Number of clusters: {len(cdata.cluster_num.unique())}')
 
-unique_labels = cdata.cluster_num.unique()
 clean_data = cdata[cdata.cluster_num != 0]
-
-
-def chunk(seq, size):
-    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
-
-
-distrib_df = clean_data.groupby(['cluster_num'])['cluster_num'].count().reset_index(name='photo_num')
-chunked_distrib = chunk(distrib_df, 50)
 
 
 def mostFreqStr(array):
@@ -186,6 +161,7 @@ for i, g in clean_data.groupby(by='cluster_num'):
                     visit_times = []
 
 prefiltered_file_path = f'{main_path}/data/prefiltered.csv'
+POI.to_csv(prefiltered_file_path)
 
 data_type = {
     'faves': 'float16',
@@ -195,6 +171,11 @@ data_type = {
 }
 
 LPD = pd.read_csv(prefiltered_file_path, engine='python', sep=',', encoding='utf-8', dtype=data_type, decimal=',')
+#  mockedup data with random values. In real life you should get this using a weather service api
+LPD['weather'] = np.random.randint(1, 10, LPD.shape[0])
+LPD['season'] = np.random.randint(1, 4, LPD.shape[0])
+LPD['daytime'] = np.random.randint(1, 3, LPD.shape[0])
+LPD['rating'] = np.random.randint(1, 5, LPD.shape[0])
 LPD = LPD.set_index(keys=['user_id', 'location_id'])
 
 visit_limit = LPD.groupby(level=[0, 1])['visit_time'].count()
@@ -308,7 +289,7 @@ def CF(user_id, location_id, s_matrix):
 
     # Means of all users
     means = np.array([np.mean(row[row != 0]) for row in r])
-
+    wmean_rating = 0
     # Check if l is in r_rating
     if location_id in r_df:
         # Find similar users rated the location that target user hasn't visited
@@ -451,7 +432,7 @@ def predict_all(model, option=None):
         uid = users[i]
         for j in range(0, len(locations)):
             lid = locations[j]
-            # Check if model is context-aware 
+            # Check if model is context-aware
             if option:
                 delta = option.get('delta')
                 c_current = X_test.xs(uid)[['season', 'daytime', 'weather']].head(1).values[0]
@@ -472,6 +453,23 @@ for d in deltas:
     eval_scores.append(precision)
 
 d_eval = pd.DataFrame(eval_scores, index=deltas, columns=['precision'])
+
+d_precision = go.Figure([go.Scatter(
+    name='MAP',
+    x=d_eval.index,
+    y=d_eval.precision,
+    text=d_eval.precision,
+    line_shape='spline'
+)])
+
+d_precision.update_layout(
+    title='The impact of similarity threshold on the recommendation quality',
+    xaxis=dict(title='Threshold of context similarity (\u03B4)', autorange='reversed'),
+    yaxis=dict(title='MAP'),
+    template=plot_template
+)
+
+d_precision.show()
 
 
 def asymmetric_cosine(m, mf=False, **kwarg):
@@ -609,6 +607,26 @@ for model in models:
 
 map_at_k = pd.DataFrame(eval_scores, index=k_range)
 
+mapk_comp = go.Figure()
+
+for model, ser in map_at_k.iteritems():
+    mapk_comp.add_trace(go.Bar(
+        name=model,
+        x=ser.index,
+        y=ser.values,
+        width=.6
+    ))
+
+mapk_comp.update_layout(
+    barmode='group',
+    title='Comparision of the proposed method with the benchmarking methods (MAP@k)',
+    xaxis=dict(title='NUmber of recommendations'),
+    yaxis=dict(title='MAP@k', range=[.7, .9]),
+    template=plot_template
+)
+
+mapk_comp.show()
+
 rmse_eval = []
 
 for model in models:
@@ -619,3 +637,20 @@ for model in models:
 
 rmse_perf = pd.DataFrame(rmse_eval, columns=['model', 'value'])
 
+rmse_comp = go.Figure([go.Bar(
+    x=rmse_perf.model,
+    y=rmse_perf.value,
+    width=.5,
+    text=round(rmse_perf.value, 2),
+    textposition='outside',
+    marker=dict(color=rmse_perf.index, colorscale='Viridis')
+)])
+
+rmse_comp.update_layout(
+    barmode='group',
+    title='Comparision of the proposed method with the benchmarking methods (RMSE)',
+    yaxis=dict(title='RMSE'),
+    template=plot_template
+)
+
+rmse_comp.show()
