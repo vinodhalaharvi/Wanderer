@@ -43,7 +43,6 @@ data_dim = raw.shape
 
 print(f'Dataframe dimentions: {data_dim}', f'\n{"-" * 50}\nData Types:\n{raw.dtypes}')
 raw.head()
-
 data = raw[['photo_id', 'owner', 'lat', 'lon', 'taken']]
 
 missing_nan = data.isna().sum()
@@ -94,21 +93,9 @@ def HDBSCAN(df, epsilon, minPts, x='lat', y='lon'):
     return new_df
 
 
-cdata = HDBSCAN(data, epsilon=120, minPts=10)
+cdata = HDBSCAN(data, epsilon=280, minPts=70)
 print(f'Number of clusters: {len(cdata.cluster_num.unique())}')
-
 clean_data = cdata[cdata.cluster_num != 0]
-
-
-def mostFreqStr(array):
-    array = [i for i in array if str(i) != 'nan']
-    if len(array) != 0:
-        counts = np.unique(array, return_counts=True)[1]
-        max_index = np.argmax(counts)
-        freq_bin = array[max_index]
-        return freq_bin
-    else:
-        return np.nan
 
 
 def medTimestamps(array):
@@ -172,7 +159,7 @@ LPD = pd.read_csv(prefiltered_file_path, engine='python', sep=',', encoding='utf
 LPD['weather'] = np.random.randint(1, 10, LPD.shape[0])
 LPD['season'] = np.random.randint(1, 4, LPD.shape[0])
 LPD['daytime'] = np.random.randint(1, 3, LPD.shape[0])
-LPD['rating'] = np.random.randint(1, 5, LPD.shape[0])
+# LPD['rating'] = np.random.randint(1, 5, LPD.shape[0])
 LPD = LPD.set_index(keys=['user_id', 'location_id'])
 
 visit_limit = LPD.groupby(level=[0, 1])['visit_time'].count()
@@ -406,3 +393,11 @@ with pd.option_context("display.max_rows", None):
 top_10 = prediction.nlargest(10, 'pred')
 top_10.style.apply(lambda col: item_relevancy(col))
 
+# pickle the file here.
+#
+POILocationInfo = POI[['location_id','lat','lon']].drop_duplicates(keep='first')
+top_10_final = top_10.reset_index()
+foo = pd.merge(left=POILocationInfo, right=top_10_final, left_on='location_id', right_on='location_id')
+foo = foo.sort_values(by='pred', ascending=False)
+foo['lat', 'lon']
+print("Done")
