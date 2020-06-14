@@ -15,24 +15,21 @@ import requests
 from datetime import datetime, timezone, timedelta
 
 
-
-
 class weatherService:
     def __init__(self):
         self.__baseurl = "https://community-open-weather-map.p.rapidapi.com"
         self.__headers = {
             'x-rapidapi-host': "community-open-weather-map.p.rapidapi.com",
             'x-rapidapi-key': "ee3f817fbfmsh8f8ec88d2a5cd97p116caajsncf67afe46867"
-            }
-
+        }
 
     def __queryWeather(self, lat: float, lon: float, dt: datetime = None):
 
         querystring = {
-            "units" : "metric",
+            "units": "metric",
             "lat": str(lat),
             "lon": str(lon)
-            }
+        }
 
         if dt is None:
             url = self.__baseurl + "/weather"
@@ -41,7 +38,7 @@ class weatherService:
             querystring['dt'] = round(dt.replace(tzinfo=timezone.utc).timestamp())
 
         response = requests.request("GET", url,
-                                    headers = self.__headers,
+                                    headers=self.__headers,
                                     params=querystring)
         if response:
             return response.json()
@@ -84,12 +81,12 @@ class weatherService:
         querystring = {
             "date": dt.date().isoformat(),
             "location": str(lat) + ',' + str(lon)
-            }
+        }
 
         headers = {
             'x-rapidapi-host': "geo-services-by-mvpc-com.p.rapidapi.com",
             'x-rapidapi-key': "ee3f817fbfmsh8f8ec88d2a5cd97p116caajsncf67afe46867"
-            }
+        }
 
         response = requests.request("GET", url,
                                     headers=headers, params=querystring)
@@ -114,9 +111,8 @@ yesterday = dt - aDay
 print(yesterday)
 weather = weatherService()
 
-print(weather.getWeather(40.4165000, -3.7025600)) # Madrid
-print(weather.getWeather(41.390205, 2.154007, yesterday)) # Barcelona
+print(weather.getWeather(40.4165000, -3.7025600))  # Madrid
+print(weather.getWeather(41.390205, 2.154007, yesterday))  # Barcelona
 
-print(weather.getDaytime(40.4165000, -3.7025600)) # Madrid
-print(weather.getDaytime(41.390205, 2.154007, yesterday)) # Barcelona
-
+print(weather.getDaytime(40.4165000, -3.7025600))  # Madrid
+print(weather.getDaytime(41.390205, 2.154007, yesterday))  # Barcelona
