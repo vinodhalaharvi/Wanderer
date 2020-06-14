@@ -1,0 +1,24 @@
+{
+  "user": {
+    "name": "foo.bar",
+    "email": "foo.bar@gmail.com"
+  },
+  "recommendedLocations": [
+    {
+      "lat": 10.1,
+      "lon": 11.11,
+      "covidRating": 5
+    },
+    {
+      "lat": 23.23,
+      "lon": 44.44,
+      "covidRating": 3
+    },
+    {
+      "lat": 9.9,
+      "lon": 8.8,
+      "covidRating": 1
+    }
+  ]
+}
+

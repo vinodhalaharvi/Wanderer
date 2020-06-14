@@ -4,6 +4,8 @@ from random import randint
 
 import numpy as np
 import pandas as pd
+from flask import Flask, request
+from geopy import Nominatim
 from geopy.distance import great_circle
 from shapely.geometry import MultiPoint
 from sklearn.cluster import DBSCAN
@@ -347,7 +349,7 @@ def EACOS_CaCF_Post(user_id, location_id, c_current, delta):
 def predict(target_user, model, option=None):
     true = r_df_test.loc[target_user]
 
-    # Check if model is context-aware 
+    # Check if model is context-aware
     if option:
         pred_val = []
         for l in true.index:
@@ -363,7 +365,6 @@ def predict(target_user, model, option=None):
     return pred
 
 
-user = '41087279@N00'
 options = {
     'delta': .3
 }
@@ -384,20 +385,46 @@ def item_relevancy(col):
     return res
 
 
-true = r_df_test.loc[user]
-pred = predict(user, EACOS_CaCF_Post, option=options)
+app = Flask(__name__)
+geoLocator = Nominatim(user_agent="travelX")
 
-with pd.option_context("display.max_rows", None):
-    prediction = pd.DataFrame({'true': true, 'pred': pred})
 
-top_10 = prediction.nlargest(10, 'pred')
-top_10.style.apply(lambda col: item_relevancy(col))
+def geocode(address):
+    code = geoLocator.geocode(address)
+    return code.latitude, code.longitude
 
-# pickle the file here.
-#
-POILocationInfo = POI[['location_id','lat','lon']].drop_duplicates(keep='first')
-top_10_final = top_10.reset_index()
-foo = pd.merge(left=POILocationInfo, right=top_10_final, left_on='location_id', right_on='location_id')
-foo = foo.sort_values(by='pred', ascending=False)
-foo['lat', 'lon']
-print("Done")
+
+def geocodeReverse(lat, lon):
+    location = geoLocator.reverse(f'{lat} {lon}')
+    return location.address
+
+
+@app.route("/", methods=["GET"])
+def get_homepage():
+    return "<strong>TravelX App</strong>"
+
+
+@app.route("/api", methods=["POST"])
+def send_response():
+    json = request.get_json()
+    user = json["_userId"]
+    pred = predict(user, EACOS_CaCF_Post, option=options)
+
+    with pd.option_context("display.max_rows", None):
+        prediction = pd.DataFrame({'pred': pred})
+
+    top_10 = prediction.nlargest(3, 'pred')
+    top_10.style.apply(lambda col: item_relevancy(col))
+
+    POILocationInfo = POI[['location_id', 'lat', 'lon']].drop_duplicates(keep='first')
+    top_10_final = top_10.reset_index()
+    result = pd.merge(left=POILocationInfo, right=top_10_final, left_on='location_id', right_on='location_id')
+    result = result.sort_values(by='pred', ascending=False)
+    res = result.to_json(orient='index', indent=2)
+
+    return res
+
+
+app.debug = True  # debug
+print("Starting server on http://0.0.0.0:5000/")
+app.run(host="0.0.0.0")
