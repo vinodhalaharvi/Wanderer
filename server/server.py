@@ -4,15 +4,6 @@ from geopy import Nominatim
 app = Flask(__name__)
 geoLocator = Nominatim(user_agent="travelX")
 
-requestJson = """{
-  "_userId": "41087279@N00"
-  "email": "foo.bar@gmail.com",
-  "location": {
-    "lat": 10.1,
-    "lon": 11.11
-  }
-}"""
-
 
 def geocode(address):
     code = geoLocator.geocode(address)
