@@ -157,11 +157,15 @@ data_type = {
 }
 
 LPD = pd.read_csv(prefiltered_file_path, engine='python', sep=',', encoding='utf-8', dtype=data_type, decimal=',')
-#  mockedup data with random values. In real life you should get this using a weather service api
+
+
+#  mocked up data with random values.
+#  In real life you should get this using a weather service api
 LPD['weather'] = np.random.randint(1, 10, LPD.shape[0])
 LPD['season'] = np.random.randint(1, 4, LPD.shape[0])
 LPD['daytime'] = np.random.randint(1, 3, LPD.shape[0])
-# LPD['rating'] = np.random.randint(1, 5, LPD.shape[0])
+
+
 LPD = LPD.set_index(keys=['user_id', 'location_id'])
 
 visit_limit = LPD.groupby(level=[0, 1])['visit_time'].count()
@@ -419,6 +423,11 @@ def send_response():
     POILocationInfo = POI[['location_id', 'lat', 'lon']].drop_duplicates(keep='first')
     top_10_final = top_10.reset_index()
     result = pd.merge(left=POILocationInfo, right=top_10_final, left_on='location_id', right_on='location_id')
+
+    #  mocked up data with random values.
+    #  in real world application this will come from
+    result['covidSafetyRating'] = np.random.randint(1, 5, result.shape[0])  # 5 is super safe and 1 is not safe at all
+
     result = result.sort_values(by='pred', ascending=False)
     res = result.to_json(orient='index', indent=2)
 
