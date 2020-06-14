@@ -9,3 +9,5 @@ TravelScrum Hackathon Project Wanderer
 
 This will train the model using the sample file in `data/london_10k.csv` and run the python flask server.
 
+### Motivation and sample data
+https://www.kaggle.com/amiralisa/context-aware-recommender/comments
