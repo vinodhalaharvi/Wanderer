@@ -1,24 +1,20 @@
 {
-  "user": {
-    "name": "foo.bar",
-    "email": "foo.bar@gmail.com"
+  "2":{
+    "location_id":975237,
+    "lat":51.464466095,
+    "lon":-0.0129279997,
+    "pred":1.5454545455
   },
-  "recommendedLocations": [
-    {
-      "lat": 10.1,
-      "lon": 11.11,
-      "covidRating": 5
-    },
-    {
-      "lat": 23.23,
-      "lon": 44.44,
-      "covidRating": 3
-    },
-    {
-      "lat": 9.9,
-      "lon": 8.8,
-      "covidRating": 1
-    }
-  ]
+  "0":{
+    "location_id":379957,
+    "lat":51.5133018494,
+    "lon":-0.0857840031,
+    "pred":1.2099282297
+  },
+  "1":{
+    "location_id":208308,
+    "lat":51.5083885193,
+    "lon":-0.1270090044,
+    "pred":1.209486166
+  }
 }
-
